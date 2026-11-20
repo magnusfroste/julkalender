@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://julkalender.skolappar.com/sitemap.xml
