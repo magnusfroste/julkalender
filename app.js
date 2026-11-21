@@ -4,7 +4,7 @@
    localStorage på enheten. Datum räknas i svensk tid, så en lucka öppnas vid
    midnatt i Stockholm även om plattan går på annan tidszon.
 
-   Rösten: /roster/dag-NN.wav spelas när en lucka öppnas (skapas med
+   Rösten: /roster/dag-NN.mp3 spelas när en lucka öppnas (skapas med
    tools/tomte_rost.py). Saknas filen läser webbläsaren upp texten i stället,
    med mörkare och långsammare röst. */
 
@@ -276,7 +276,7 @@
   var uppspelning = 0;       // så att bara en av felvägarna faller tillbaka
 
   function rostfil(n) {
-    return ROSTFIL + (n < 10 ? "0" : "") + n + ".wav";
+    return ROSTFIL + (n < 10 ? "0" : "") + n + ".mp3";
   }
 
   function spela(n) {

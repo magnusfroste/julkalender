@@ -130,6 +130,8 @@ def main():
     p.add_argument("--only", nargs="*", type=int, help="bara dessa luckor")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--force", action="store_true", help="gör om filer som redan finns")
+    p.add_argument("--format", default=os.environ.get("TOMTE_TTS_FORMAT", "mp3"), choices=["mp3", "wav", "opus"],
+                   help="ljudformat; mp3 är ~5x mindre än wav och räcker för tal")
     args = p.parse_args()
 
     dagar = las_dagar()
@@ -159,7 +161,7 @@ def main():
 
     gjorda, hoppade = 0, 0
     for d in valda:
-        mal = OUT_DIR / ("dag-%02d.wav" % d["dag"])
+        mal = OUT_DIR / ("dag-%02d.%s" % (d["dag"], args.format))
         if mal.exists() and not args.force:
             hoppade += 1
             print("  – dag %02d finns redan (%.0f kB)" % (d["dag"], mal.stat().st_size / 1024))
@@ -168,7 +170,7 @@ def main():
             "model": args.model,
             "input": mening(d),
             "voice": args.voice,
-            "response_format": "wav",
+            "response_format": args.format,
             "speed": 0.95,
         }
         try:
@@ -177,14 +179,15 @@ def main():
             sys.exit("dag %02d: HTTP %s – %s" % (d["dag"], e.code, e.read()[:200].decode("utf-8", "replace")))
         except Exception as e:
             sys.exit("dag %02d: %s" % (d["dag"], e))
-        if not (ljud[:4] == b"RIFF" or ljud[:3] == b"ID3" or ljud[:4] == b"OggS"):
-            sys.exit("dag %02d: svaret är inte ljud (%s, %d byte)" % (d["dag"], typ, len(ljud)))
+        if not ar_ljud(ljud, typ):
+            sys.exit("dag %02d: svaret är inte ljud (%s, %d byte): %s"
+                     % (d["dag"], typ, len(ljud), ljud[:120].decode("utf-8", "replace")))
         mal.write_bytes(ljud)
         gjorda += 1
         print("  ✓ dag %02d  %.0f kB  %s" % (d["dag"], len(ljud) / 1024, ("%ss" % wav_langd(ljud)) if wav_langd(ljud) else typ))
 
     print("\n%d filer skrivna, %d fanns redan. Total storlek: %.1f MB"
-          % (gjorda, hoppade, sum(f.stat().st_size for f in OUT_DIR.glob("*.wav")) / 1048576))
+          % (gjorda, hoppade, sum(f.stat().st_size for f in OUT_DIR.glob("dag-*")) / 1048576))
     return 0
 
 
