@@ -39,6 +39,9 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from rost_http import ar_ljud, kor  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 APP_JS = ROOT / "app.js"
 OUT_DIR = ROOT / "public" / "roster"
@@ -94,18 +97,27 @@ def begar(url, nyckel, kropp, api):
         endpoint = url.rstrip("/") + "/v1/audio/speech"
         payload = kropp
 
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        endpoint,
-        data=data,
-        headers={"Content-Type": "application/json", "Authorization": "Bearer " + nyckel},
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=180) as svar:
-        ljud = svar.read()
-        if not ljud:
-            raise RuntimeError("tomt svar från %s" % endpoint)
-        return ljud, svar.headers.get("Content-Type", "")
+    s, typ, ljud = kor(endpoint, "POST",
+                       {"Content-Type": "application/json", "Authorization": "Bearer " + nyckel},
+                       kropp=json.dumps(payload), timeout=180)
+    if s != 200:
+        raise RuntimeError("HTTP %s – %s" % (s, ljud[:200].decode("utf-8", "replace")))
+    if not ljud:
+        raise RuntimeError("tomt svar från %s" % endpoint)
+    return ljud, typ
+
+
+def las_audio():
+    """Nycklar och adresser från /opt/data/.audio, om filen finns."""
+    fil = Path(os.environ.get("ROST_KEYS", "/opt/data/.audio"))
+    ut = {}
+    if fil.exists():
+        for rad in fil.read_text(encoding="utf-8").splitlines():
+            rad = rad.strip()
+            if rad and not rad.startswith("#") and "=" in rad:
+                k, v = rad.split("=", 1)
+                ut[k.strip()] = v.strip()
+    return ut
 
 
 def main():
@@ -123,6 +135,15 @@ def main():
     dagar = las_dagar()
     valda = [d for d in dagar if not args.only or d["dag"] in args.only]
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    # .audio fyller i det som inte angavs på kommandoraden.
+    audio = las_audio()
+    args.url = args.url or audio.get("PIPER_URL", "")
+    args.key = args.key or audio.get("PIPER_KEY", "")
+    if args.voice == "sv_SE-nst-medium" and audio.get("PIPER_VOICE"):
+        args.voice = audio["PIPER_VOICE"]
+    if args.url.endswith("piper.autoversio.ai") and args.voice == "sv_SE-nst-medium":
+        args.voice = "nst"   # piper-sv namnger rösterna alma/lisa/nst
 
     if args.dry_run or not args.url:
         if not args.dry_run:
