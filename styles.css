@@ -186,6 +186,7 @@ main {
   padding: 0;
   background: transparent;
   max-width: min(560px, 92vw);
+  max-height: 92dvh;
   color: var(--ink);
 }
 
@@ -198,6 +199,10 @@ main {
   border-radius: 24px;
   padding: clamp(22px, 4vmin, 34px);
   text-align: center;
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-shadow: 0 24px 60px -30px rgba(20, 24, 31, 0.6);
 }
 
@@ -232,6 +237,145 @@ main {
   color: var(--rod-djup);
   font-size: clamp(16px, 2.1vmin, 19px);
   line-height: 1.4;
+}
+
+/* ---- Tomtens samtal ---------------------------------------------------- */
+.samtal {
+  margin: clamp(16px, 2.6vmin, 22px) 0 0;
+  text-align: left;
+}
+
+.dlg-rull {
+  margin-top: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+}
+
+.prat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 2px;
+}
+
+.bubbla {
+  margin: 0;
+  max-width: 48ch;
+  padding: 11px 15px 12px;
+  border-radius: 18px;
+  font-size: clamp(16px, 2.1vmin, 18px);
+  line-height: 1.45;
+  text-align: left;
+}
+
+.bubbla-tomte {
+  align-self: flex-start;
+  background: #fff;
+  border: 1px solid var(--kant);
+  border-bottom-left-radius: 6px;
+}
+
+.bubbla-barn {
+  align-self: flex-end;
+  background: var(--rod-tvag);
+  color: var(--rod-djup);
+  border-bottom-right-radius: 6px;
+  font-weight: 600;
+}
+
+.bubbla-vem {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--dampad);
+}
+
+.bubbla-barn .bubbla-vem {
+  color: rgba(125, 21, 38, 0.7);
+}
+
+/* Repliken som spelas just nu får en svag ring, så det syns vem som pratar. */
+.bubbla.sager {
+  box-shadow: 0 0 0 2px rgba(179, 36, 59, 0.22);
+}
+
+.chips-fragor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.fraga-knapp {
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1.5px solid rgba(179, 36, 59, 0.3);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--rod-djup);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.fraga-knapp:hover,
+.fraga-knapp:focus-visible {
+  background: var(--rod-tvag);
+  border-color: rgba(179, 36, 59, 0.5);
+}
+
+.skriv {
+  margin-top: 14px;
+}
+
+.skriv-etikett {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--dampad);
+}
+
+.skriv-rad {
+  display: flex;
+  gap: 8px;
+}
+
+.skriv-rad input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1.5px solid rgba(20, 24, 31, 0.14);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.skriv-rad input:focus {
+  outline: 2px solid rgba(179, 36, 59, 0.4);
+  outline-offset: 1px;
+}
+
+.fragor-kvar {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--dampad);
+}
+
+.fragor-kvar:empty {
+  margin: 0;
 }
 
 .dlg-knappar {

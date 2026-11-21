@@ -78,15 +78,33 @@
       <div class="dlg-inre">
         <p class="dlg-dag" id="dlg-dag"></p>
         <h2 id="dlg-titel"></h2>
-        <p class="dlg-text" id="dlg-text"></p>
-        <p class="dlg-uppdrag" id="dlg-uppdrag"></p>
+        <div class="dlg-rull">
+          <p class="dlg-text" id="dlg-text"></p>
+          <p class="dlg-uppdrag" id="dlg-uppdrag"></p>
+
+          <section class="samtal" id="samtal" aria-label="Prata med tomten">
+            <div class="prat" id="prat" aria-live="polite"></div>
+            <div class="forslag" id="forslag"></div>
+            <form class="skriv" id="skriv" hidden>
+              <label class="skriv-etikett" for="fraga-falt">Skriv din fråga till tomten</label>
+              <div class="skriv-rad">
+                <input id="fraga-falt" type="text" autocomplete="off" enterkeyhint="send"
+                       placeholder="Din fråga" aria-describedby="fragor-kvar">
+                <button class="knapp knapp-ton" type="submit">Fråga</button>
+              </div>
+            </form>
+            <p class="fragor-kvar" id="fragor-kvar"></p>
+          </section>
+        </div>
+
         <div class="dlg-knappar">
-          <button type="button" class="knapp knapp-ton" id="las-upp">Läs upp</button>
+          <button type="button" class="knapp knapp-ton" id="las-upp">Lyssna igen</button>
           <button type="button" class="knapp" id="stang">Stäng</button>
         </div>
       </div>
     </dialog>
 
+    <script src="/tomte.js"></script>
     <script src="/app.js"></script>
   <!-- START:startskarm -->
 <style>
