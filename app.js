@@ -1,8 +1,12 @@
 /* Julkalender – logiken.
-   Regler som gäller: inga nätanrop, ingen inloggning, inget sparas på server.
-   Vilka luckor som öppnats ligger i localStorage på enheten. Datum räknas i
-   svensk tid, så en lucka öppnas vid midnatt i Stockholm även om plattan går
-   på annan tidszon. */
+   Regler som gäller: inga nätanrop utom tomtens egna röstfiler, ingen
+   inloggning, inget sparas på server. Vilka luckor som öppnats ligger i
+   localStorage på enheten. Datum räknas i svensk tid, så en lucka öppnas vid
+   midnatt i Stockholm även om plattan går på annan tidszon.
+
+   Rösten: /roster/dag-NN.wav spelas när en lucka öppnas (skapas med
+   tools/tomte_rost.py). Saknas filen läser webbläsaren upp texten i stället,
+   med mörkare och långsammare röst. */
 
 (function () {
   "use strict";
@@ -249,32 +253,81 @@
     dlgTitel.textContent = d.titel;
     dlgText.textContent = d.text;
     dlgUppdrag.textContent = d.uppdrag;
-    lasUppKnapp.hidden = !("speechSynthesis" in window);
+    dlgDag.dataset.nr = String(n);
+    lasUppKnapp.hidden = !harRost();
     if (typeof dialog.showModal === "function") {
       dialog.showModal();
     } else {
       dialog.setAttribute("open", "");
     }
-    if (textTillRost) lasUpp();
+    if (textTillRost) spela(n);
   }
 
-  function lasUpp() {
+  function harRost() {
+    return rostFinns === true || ("speechSynthesis" in window);
+  }
+
+  /* Tomtens röst. .wav-filen är förinspelad och ligger på samma server som
+     appen, så inget API-anrop behövs i webbläsaren. Finns den inte spelar vi
+     texten med talsyntesen i stället – då hörs tomten ändå, bara torrare. */
+  var ROSTFIL = "/roster/dag-";
+  var rostFinns = null;      // null = inte undersökt än, false = använd talsyntes
+  var ljud = null;
+  var uppspelning = 0;       // så att bara en av felvägarna faller tillbaka
+
+  function rostfil(n) {
+    return ROSTFIL + (n < 10 ? "0" : "") + n + ".wav";
+  }
+
+  function spela(n) {
+    stoppa();
+    var id = uppspelning += 1;
+    if (rostFinns !== false) {
+      var a = new Audio(rostfil(n));
+      ljud = a;
+      // Filen saknas, eller webbläsaren vägrar spela den: talsyntes i stället.
+      // Både error-händelsen och play()-avvisningen kan komma – bara en får gälla.
+      var fallTillbaka = function () {
+        if (id !== uppspelning) return;
+        uppspelning += 1;
+        ljud = null;
+        rostFinns = false;
+        lasUpp(n);
+      };
+      a.addEventListener("error", fallTillbaka);
+      var p = a.play();
+      if (p && typeof p.catch === "function") p.catch(fallTillbaka);
+      return;
+    }
+    lasUpp(n);
+  }
+
+  function lasUpp(n) {
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
-    var d = DAGAR[parseInt(dlgDag.textContent, 10) - 1];
+    var d = DAGAR[n - 1];
     if (!d) return;
-    var yttrande = new SpeechSynthesisUtterance(d.titel + ". " + d.text + " " + d.uppdrag);
+    var yttrande = new SpeechSynthesisUtterance(d.text + " " + d.uppdrag);
     var roster = window.speechSynthesis.getVoices().filter(function (v) {
       return /^sv/i.test(v.lang);
     });
     if (roster.length) yttrande.voice = roster[0];
     yttrande.lang = "sv-SE";
-    yttrande.rate = 0.94;
+    yttrande.rate = 0.88;
+    yttrande.pitch = 0.85;   // mörkare: låter mer som tomte
     window.speechSynthesis.speak(yttrande);
   }
 
-  function stang() {
+  function stoppa() {
+    if (ljud) {
+      try { ljud.pause(); } catch (e) {}
+      ljud = null;
+    }
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  }
+
+  function stang() {
+    stoppa();
     if (dialog.open && typeof dialog.close === "function") dialog.close();
     else dialog.removeAttribute("open");
   }
@@ -288,22 +341,35 @@
       raknare.textContent = "Lucka " + n + " öppnas den " + n + " december.";
       return;
     }
-    if (!arOppnad(n)) {
+    var ny = !arOppnad(n);
+    if (ny) {
       oppnade.push(n);
       spara();
       rita();
     }
-    visa(n, false);
+    // Tomten säger sin hälsning när luckan öppnas – inte när man tittar tillbaka.
+    visa(n, ny);
   });
 
   stangKnapp.addEventListener("click", stang);
-  lasUppKnapp.addEventListener("click", lasUpp);
-  dialog.addEventListener("close", function () {
-    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  lasUppKnapp.addEventListener("click", function () {
+    spela(parseInt(dlgDag.dataset.nr || "1", 10));
   });
+  dialog.addEventListener("close", stoppa);
   dialog.addEventListener("click", function (e) {
     if (e.target === dialog) stang();
   });
+
+  // Finns förinspelad röst? Ett litet anrop vid start, sedan vet vi.
+  if (window.fetch) {
+    fetch(rostfil(1), { method: "HEAD" }).then(function (s) {
+      rostFinns = s.ok;
+    }).catch(function () {
+      rostFinns = false;
+    });
+  } else {
+    rostFinns = false;
+  }
 
   pedagog.addEventListener("click", function () {
     if (!allaOppnade) {
