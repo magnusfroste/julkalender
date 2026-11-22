@@ -38,8 +38,8 @@ behövs. Två saker att känna till:
 - Själva tolkningen görs av webbläsarens rösttjänst (i praktiken Apple på iOS,
   Google i Chrome), alltså utanför vår kontroll. Därför står det i sidfoten.
 - Saknas stödet (t.ex. Firefox) visas ingen mikrofon alls; då fungerar
-  skrivfältet som vanligt. Nekar användaren mikrofonen göms knappen och en rad
-  säger "Mikrofonen är avstängd. Skriv i stället."
+  skrivfältet som vanligt. Nekar användaren mikrofonen står det "Mikrofonen är
+  avstängd. Skriv i stället." och knappen finns kvar för ett nytt försök.
 
 Tomten tystas innan mikrofonen slås på, annars hör den hans egen röst. Lyssningen
 stängs av efter 12 sekunder utan tal, när luckan stängs, och när frågan skickats.

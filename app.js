@@ -687,7 +687,8 @@
       mikLage(false);
       var kod = e && e.error;
       if (kod === "not-allowed" || kod === "service-not-allowed") {
-        mikRad.hidden = true;
+        // Knappen blir kvar så att ett försök till går att göra (tillstånd kan
+        // ändras i webbläsarens inställningar), men vi säger hur läget är.
         mikSager("Mikrofonen är avstängd. Skriv i stället.");
       } else if (kod === "no-speech") {
         mikSager("Jag hörde inget. Tryck igen och prata lite högre.");
