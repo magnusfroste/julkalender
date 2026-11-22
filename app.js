@@ -151,6 +151,10 @@
   var skriv = document.getElementById("skriv");
   var fragaFalt = document.getElementById("fraga-falt");
   var fragorKvarText = document.getElementById("fragor-kvar");
+  var mik = document.getElementById("mik");
+  var mikRad = document.getElementById("mik-rad");
+  var mikEtikett = mik ? mik.querySelector(".mik-text") : null;
+  var mikStatus = document.getElementById("mik-status");
 
   var oppnade = las();
   var allaOppnade = false;
@@ -261,6 +265,7 @@
     var tomte = window.TOMTE && window.TOMTE.dagar ? window.TOMTE.dagar[n - 1] : null;
     dlgDag.textContent = n + " december";
     dlgTitel.textContent = d.titel;
+    if (mikStatus) mikSager("");
     dlgText.textContent = d.text;
     dlgUppdrag.textContent = d.uppdrag;
     dlgDag.dataset.nr = String(n);
@@ -549,6 +554,8 @@
 
   function stang() {
     stoppa();
+    slutaLyssna();
+    if (mikStatus) mikSager("");
     if (dialog.open && typeof dialog.close === "function") dialog.close();
     else dialog.removeAttribute("open");
   }
@@ -588,16 +595,129 @@
     ]);
   });
 
-  skriv.addEventListener("submit", function (e) {
-    e.preventDefault();
-    if (!window.TOMTE || samtal.klar || samtal.kvar <= 0) return;
-    var text = (fragaFalt.value || "").trim();
-    if (!text) return;
+  /* En fråga från barnet, oavsett om den skrevs eller sades. */
+  function fragaText(text) {
+    text = String(text || "").trim();
+    if (!text) return false;
+    if (!window.TOMTE || samtal.klar || samtal.kvar <= 0) return false;
     fragaFalt.value = "";
     var traff = matchaFraga(samtal.dag, text);
     stallFraga(samtal.dag, text, traff.svar, traff.namn);
+    return true;
+  }
+
+  skriv.addEventListener("submit", function (e) {
+    e.preventDefault();
+    fragaText(fragaFalt.value);
   });
-  dialog.addEventListener("close", stoppa);
+
+  /* Röst: barnet trycker på mikrofonen och pratar i stället för att skriva.
+     Vi använder webbläsarens egen tolkning (svenska), så inget ljud går till
+     vår server, ingen nyckel behövs och inget spelas in. Saknas stödet visas
+     ingen mikrofon alls och skrivfältet fungerar som förut. */
+  var Rost = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var lyssnar = null;
+
+  function mikSager(text) {
+    mikStatus.textContent = text;
+    mikStatus.hidden = !text;
+  }
+
+  function mikLage(pa) {
+    mik.setAttribute("aria-pressed", pa ? "true" : "false");
+    if (mikEtikett) mikEtikett.textContent = pa ? "Lyssnar … prata nu" : "Säg din fråga";
+  }
+
+  function slutaLyssna() {
+    var r = lyssnar;
+    lyssnar = null;
+    mikLage(false);
+    if (r) {
+      try { r.stop(); } catch (e) { /* redan stoppad */ }
+    }
+  }
+
+  function lyssna() {
+    if (!Rost) return;
+    if (lyssnar) { slutaLyssna(); return; }
+    if (!window.TOMTE || samtal.klar || samtal.kvar <= 0) return;
+
+    // Tysta tomten först, annars hör mikrofonen hans egen röst.
+    stoppa();
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+
+    var r = new Rost();
+    r.lang = "sv-SE";
+    r.continuous = false;
+    r.interimResults = true;
+    r.maxAlternatives = 1;
+    lyssnar = r;
+    mikLage(true);
+    mikSager("");
+
+    var hortText = "";
+    var vakt = setTimeout(function () {
+      mikSager("Jag hörde inget. Tryck igen och prata lite högre.");
+      slutaLyssna();
+    }, 12000);
+
+    r.onresult = function (e) {
+      var slutlig = "";
+      var pagaende = "";
+      for (var i = e.resultIndex; i < e.results.length; i += 1) {
+        var bit = e.results[i][0].transcript;
+        if (e.results[i].isFinal) slutlig += bit;
+        else pagaende += bit;
+      }
+      hortText = (slutlig || pagaende || hortText).trim();
+      if (hortText) fragaFalt.value = hortText;
+      if (slutlig) {
+        clearTimeout(vakt);
+        mikSager("");
+        setTimeout(function () {
+          slutaLyssna();
+          fragaText(hortText);
+        }, 150);
+      }
+    };
+
+    r.onerror = function (e) {
+      clearTimeout(vakt);
+      lyssnar = null;
+      mikLage(false);
+      var kod = e && e.error;
+      if (kod === "not-allowed" || kod === "service-not-allowed") {
+        mikRad.hidden = true;
+        mikSager("Mikrofonen är avstängd. Skriv i stället.");
+      } else if (kod === "no-speech") {
+        mikSager("Jag hörde inget. Tryck igen och prata lite högre.");
+      } else if (kod === "network") {
+        mikSager("Rösten behöver nät. Skriv i stället.");
+      } else {
+        mikSager("Det gick inte att lyssna. Skriv i stället.");
+      }
+    };
+
+    r.onend = function () {
+      clearTimeout(vakt);
+      lyssnar = null;
+      mikLage(false);
+    };
+
+    try {
+      r.start();
+    } catch (e) {
+      lyssnar = null;
+      mikLage(false);
+      mikSager("Det gick inte att lyssna. Skriv i stället.");
+    }
+  }
+
+  if (Rost) {
+    mik.addEventListener("click", lyssna);
+    mikRad.hidden = false;
+  }
+  dialog.addEventListener("close", function () { stoppa(); slutaLyssna(); });
   dialog.addEventListener("click", function (e) {
     if (e.target === dialog) stang();
   });

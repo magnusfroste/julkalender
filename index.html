@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Julkalender – en lucka om dagen | Skolappar</title>
-    <meta name="description" content="Julkalender för barn: 24 luckor, en om dagen, med en hälsning från tomten och ett litet uppdrag. Gratis, utan inloggning och utan reklam – fungerar på iPad, mobil och dator." />
+    <meta name="description" content="Julkalender för barn: 24 luckor, en om dagen, där tomten berättar, ställer frågor och svarar när barnet pratar eller skriver. Gratis, utan inloggning och utan reklam – fungerar på iPad, mobil och dator." />
     <meta name="author" content="Magnus Froste" />
     <meta name="theme-color" content="#b3243b" />
     <link rel="canonical" href="https://julkalender.skolappar.com/" />
@@ -71,7 +71,7 @@
         <span aria-hidden="true">·</span>
         <a href="https://www.skolappar.com">Fler appar på skolappar.com</a>
       </p>
-      <p class="liten">Gratis · ingen inloggning · ingen reklam · inga uppgifter sparas på en server</p>
+      <p class="liten">Gratis · ingen inloggning · ingen reklam · inga uppgifter sparas på en server. Röstfrågor tolkas av webbläsarens egen rösttjänst.</p>
     </footer>
 
     <dialog class="lucka-dialog" id="dialog" aria-labelledby="dlg-titel">
@@ -85,8 +85,15 @@
           <section class="samtal" id="samtal" aria-label="Prata med tomten">
             <div class="prat" id="prat" aria-live="polite"></div>
             <div class="forslag" id="forslag"></div>
+            <div class="mik-rad" id="mik-rad" hidden>
+              <button class="mik-knapp" id="mik" type="button" aria-pressed="false">
+                <span class="mik-ikon" aria-hidden="true">🎤</span>
+                <span class="mik-text">Säg din fråga</span>
+              </button>
+              <p class="mik-status" id="mik-status" hidden></p>
+            </div>
             <form class="skriv" id="skriv" hidden>
-              <label class="skriv-etikett" for="fraga-falt">Skriv din fråga till tomten</label>
+              <label class="skriv-etikett" for="fraga-falt">…eller skriv den</label>
               <div class="skriv-rad">
                 <input id="fraga-falt" type="text" autocomplete="off" enterkeyhint="send"
                        placeholder="Din fråga" aria-describedby="fragor-kvar">
