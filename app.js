@@ -241,11 +241,11 @@
     var tillatna = oppnaTillOchMed();
     if (tillatna === 0) {
       var kvar = dagarKvarTillForsta();
-      raknare.textContent = kvar === 1 ? "Kalendern öppnar i morgon." : "Kalendern öppnar om " + kvar + " dagar.";
+      raknare.textContent = kvar === 1 ? "1 dag kvar" : kvar + " dagar kvar";
     } else if (tillatna >= 24) {
-      raknare.textContent = "Alla 24 luckor är öppna.";
+      raknare.textContent = "Alla 24 öppna";
     } else {
-      raknare.textContent = "I dag är det lucka " + tillatna + " som gäller.";
+      raknare.textContent = "Öppna lucka " + tillatna;
     }
   }
 
@@ -566,7 +566,7 @@
     var n = parseInt(knapp.dataset.nr, 10);
     if (arLast(n) && !allaOppnade) {
       // Låst lucka: säg när den öppnas i stället för att ingenting hända.
-      raknare.textContent = "Lucka " + n + " öppnas den " + n + " december.";
+      raknare.textContent = "Lucka " + n + " öppnas i december";
       return;
     }
     var ny = !arOppnad(n);
@@ -739,7 +739,7 @@
     if (!allaOppnade) {
       allaOppnade = true;
       pedagog.textContent = "Visa bara dagens luckor";
-      raknare.textContent = "Alla luckor visas just nu.";
+      raknare.textContent = "Alla 24 öppna";
     } else {
       allaOppnade = false;
       pedagog.textContent = "Visa alla luckor";
