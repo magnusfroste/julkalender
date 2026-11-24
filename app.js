@@ -1,5 +1,6 @@
 /* Julkalender – logiken.
-   Regler som gäller: inga nätanrop utom tomtens egna röstfiler, ingen
+   Regler som gäller: inga nätanrop utom tomtens egna röstfiler och
+   skolappars anonyma räknare (kotten.js, bara antal), ingen
    inloggning, inget sparas på server. Vilka luckor som öppnats ligger i
    localStorage på enheten. Datum räknas i svensk tid, så en lucka öppnas vid
    midnatt i Stockholm även om plattan går på annan tidszon.
@@ -278,6 +279,8 @@
     fragaFalt.value = "";
     fragorKvarText.textContent = "";
 
+    if (window.skolappar) window.skolappar.event("round_start");
+
     if (typeof dialog.showModal === "function") {
       dialog.showModal();
     } else {
@@ -470,6 +473,7 @@
 
   function avsluta(n) {
     samtal.klar = true;
+    if (window.skolappar) window.skolappar.event("round_done");
     forslag.innerHTML = "";
     skriv.hidden = true;
     var tomte = window.TOMTE.dagar[n - 1];
