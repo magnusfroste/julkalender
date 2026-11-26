@@ -136,11 +136,11 @@ def main():
         ],
     }
     (PUB / "site.webmanifest").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    (PUB / "robots.txt").write_text("User-agent: *\nAllow: /\n\nSitemap: https://julkalender.skolappar.com/sitemap.xml\n", encoding="utf-8")
+    (PUB / "robots.txt").write_text("User-agent: *\nAllow: /\n\nSitemap: https://julkalender.skolappar.org/sitemap.xml\n", encoding="utf-8")
     (PUB / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-        "  <url><loc>https://julkalender.skolappar.com/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n"
+        "  <url><loc>https://julkalender.skolappar.org/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n"
         "</urlset>\n",
         encoding="utf-8",
     )

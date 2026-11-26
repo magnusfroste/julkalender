@@ -85,4 +85,4 @@ köra om skriptet **och** deploya, annars säger rösten något annat än texten
 ## Drift
 
 Statisk sajt i nginx (`Dockerfile`), publicerad som git-app på AgentHotel:
-`julkalender.skolappar.com`.
+`julkalender.skolappar.org`.
