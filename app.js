@@ -305,58 +305,21 @@
   }
 
   function harRost() {
-    return rostFinns === true || ("speechSynthesis" in window);
+    return true;   // replikerna är inspelade; saknas en fil blir det tyst
   }
 
-  /* Tomtens röst. Varje replik är förinspelad (piper, röst nst) och ligger i
+  /* Tomtens röst. Varje replik är förinspelad med rösten omni och ligger i
      /roster som mp3 – samma röst hela samtalet, inget API-anrop från
-     webbläsaren. Saknas en fil läser talsyntesen samma text i stället. */
+     webbläsaren. Saknas en fil blir det tyst och texten står kvar i rutan. */
   var ROST = "/roster/";
-  var rostFinns = null;      // null = inte undersökt än, false = använd talsyntes
   var ljud = null;
   var tur = 0;               // ökar vid varje avbrott, så gamla köer dör
   var samtal = { dag: 0, kvar: 0, klar: false, fragade: [] };
 
-  function talsyntes(text, klar) {
-    if (!("speechSynthesis" in window)) {
-      if (klar) klar();
-      return;
-    }
-    window.speechSynthesis.cancel();
-    var minTur = tur;
-    var y = new SpeechSynthesisUtterance(text);
-    var roster = window.speechSynthesis.getVoices().filter(function (v) {
-      return /^sv/i.test(v.lang);
-    });
-    // Ingen röst i webbläsaren (t.ex. en del Chromebooks och headless-lägen):
-    // då finns inget att vänta på, samtalet går vidare direkt.
-    if (!roster.length && window.speechSynthesis.getVoices().length === 0) {
-      if (klar) klar();
-      return;
-    }
-    if (roster.length) y.voice = roster[0];
-    y.lang = "sv-SE";
-    y.rate = 0.88;
-    y.pitch = 0.85;   // mörkare: låter mer som tomte
-    var vakt = setTimeout(function () {
-      if (minTur === tur && klar) klar();
-    }, Math.max(6000, text.length * 90));
-    if (klar) {
-      y.addEventListener("end", function () {
-        clearTimeout(vakt);
-        if (minTur === tur) klar();
-      });
-    }
-    window.speechSynthesis.speak(y);
-  }
-
-  /* Spelar en replik och anropar klar() när den är slut. Faller tillbaka på
-     talsyntes om filen saknas eller webbläsaren vägrar spela den. */
+  /* Spelar en replik och anropar klar() när den är slut. Saknas filen eller
+     vägrar webbläsaren spela den blir det tyst – texten står kvar i rutan och
+     samtalet går vidare. Ingen talsyntes. */
   function spelaEn(del, klar) {
-    if (rostFinns === false) {
-      talsyntes(del.text, klar);
-      return;
-    }
     var minTur = tur;
     var a = new Audio(ROST + del.namn + ".mp3");
     ljud = a;
@@ -371,11 +334,10 @@
       a.removeEventListener("ended", klart);
       a.removeEventListener("error", fel);
       if (minTur !== tur) return;
-      rostFinns = false;      // en gång räcker: nästa replik går direkt på talsyntes
       ljud = null;
-      talsyntes(del.text, klar);
+      if (klar) klar();       // tyst: texten syns redan
     };
-    // Om varken "ended" eller talsyntesen hör av sig (en del webbläsare i
+    // Om varken "ended" eller något annat hör av sig (en del webbläsare i
     // headless-läge, eller en ljudfil som fastnar) går samtalet vidare ändå.
     var vakt = setTimeout(function () {
       if (minTur !== tur) return;
@@ -553,7 +515,6 @@
       try { ljud.pause(); } catch (e) {}
       ljud = null;
     }
-    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   }
 
   function stang() {
@@ -589,7 +550,7 @@
     var d = DAGAR[n - 1];
     var tomte = window.TOMTE && window.TOMTE.dagar ? window.TOMTE.dagar[n - 1] : null;
     if (!tomte) {
-      if (d) talsyntes(d.text + " " + d.uppdrag);
+      if (d) spelaSerie([{ namn: "dag-" + p(n), text: d.text + " " + d.uppdrag }]);
       return;
     }
     spelaSerie([
@@ -648,7 +609,6 @@
 
     // Tysta tomten först, annars hör mikrofonen hans egen röst.
     stoppa();
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
 
     var r = new Rost();
     r.lang = "sv-SE";
@@ -726,18 +686,6 @@
   dialog.addEventListener("click", function (e) {
     if (e.target === dialog) stang();
   });
-
-  // Finns förinspelad röst? Ett litet anrop vid start, sedan vet vi. Vi frågar
-  // efter första luckans hälsning, som är den kortaste filen.
-  if (window.fetch) {
-    fetch(ROST + "halsning-01.mp3", { method: "HEAD" }).then(function (s) {
-      rostFinns = s.ok;
-    }).catch(function () {
-      rostFinns = false;
-    });
-  } else {
-    rostFinns = false;
-  }
 
   pedagog.addEventListener("click", function () {
     if (!allaOppnade) {
